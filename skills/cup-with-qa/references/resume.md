@@ -35,3 +35,8 @@ Every piece of state is a file in the run dir, so a resume reads files, not memo
 - **Reboot under memory pressure.** Two reboots happened with 3-5 testers plus heavy apps on 16 GB. The
   capacity gate prevents new lanes under pressure; it cannot stop other apps from using memory.
 - **Tester quota weekly window.** Waiting days is not useful; weekly pauses stop the lane and are reported.
+- **Early quota reset.** A window can reset before its recorded `resets_at`. The guard probes every 20 minutes
+  while paused and lifts the pause as soon as both windows read under the thresholds.
+- **Lanes shifting the active workspace.** Lanes that create organizations or workspaces can make a fresh
+  sign-in land in an empty one, and a tester then reports every scenario as blocked. Tell testers in
+  `context.md` which workspace holds the test data and to switch back to it after every sign-in.
