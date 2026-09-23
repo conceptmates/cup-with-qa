@@ -1,5 +1,7 @@
 # cup-with-qa
 
+[![skills.sh](https://skills.sh/b/conceptmates/cup-with-qa)](https://skills.sh/conceptmates/cup-with-qa)
+
 An agent skill for end-to-end QA campaigns on web and mobile apps. Claude Opus plans real-life happy and
 failure scenarios per feature lane, a tester model (Codex by default) drives the app in isolated browser
 or device sessions, Opus judges every round from screenshots and source, and verified findings become
@@ -8,8 +10,15 @@ issues with the screenshots embedded.
 ## Install
 
 ```bash
-npx skills add conceptmates/cup-with-qa -g        # from GitHub, once published
+npx skills add conceptmates/cup-with-qa -g        # from GitHub
 npx skills add ./path/to/cup-with-qa -g           # from a local checkout
+```
+
+Listed on [skills.sh](https://skills.sh/conceptmates/cup-with-qa).
+
+```bash
+# update later
+npx skills update cup-with-qa -g
 ```
 
 ## Requirements
