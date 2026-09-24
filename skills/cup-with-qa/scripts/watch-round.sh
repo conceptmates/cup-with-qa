@@ -10,7 +10,7 @@ while [ "$(date +%s)" -lt "$end" ]; do
   [ -f "$OUT/DONE" ] && { cat "$OUT/DONE"; exit 0; }
   if ! pgrep -f "run-tester.sh $RUN $LANE $ROUND\$" >/dev/null; then
     sleep 5; [ -f "$OUT/DONE" ] && { cat "$OUT/DONE"; exit 0; }
-    if [ -f "$RUN/QUOTA_PAUSE" ] || cat "$OUT"/tester*.log 2>/dev/null | tail -c 4000 | grep -qi "usage limit"; then
+    if [ -f "$RUN/QUOTA_PAUSE" ] || cat "$OUT"/tester*.log 2>/dev/null | tail -c 4000 | grep -qE "^(ERROR: ?)?You.ve hit your usage limit"; then
       echo "exit=quota rc=runner-died" > "$OUT/DONE"; else echo "exit=1 rc=runner-died" > "$OUT/DONE"; fi
     cat "$OUT/DONE"; exit 3
   fi

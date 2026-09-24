@@ -78,5 +78,5 @@ fi
 if [ "$TARGET" = web ]; then AGENT_BROWSER_SESSION="$SESSION" agent-browser close >/dev/null 2>&1; else agent-device close --session "$SESSION" >/dev/null 2>&1; fi
 
 if [ -f "$RUN/QUOTA_PAUSE" ] && [ "$ON_LIMIT" != switch ]; then done_with "exit=quota rc=$RC guard-paused"
-elif cat "$OUT"/tester*.log 2>/dev/null | tail -c 4000 | grep -qi "usage limit"; then done_with "exit=quota rc=$RC"
+elif cat "$OUT"/tester*.log 2>/dev/null | tail -c 4000 | grep -qE "^(ERROR: ?)?You.ve hit your usage limit"; then done_with "exit=quota rc=$RC"
 else done_with "exit=$RC"; fi
