@@ -38,7 +38,8 @@ npx skills update cup-with-qa -g
   mobile-view lanes
 - An admission gate that starts lanes only while RAM, swap and CPU leave headroom
 - A quota guard that pauses testers at a threshold and resumes the same tester session after the reset
-- File-based state, so a reboot or session stop resumes without redoing finished work
+- File-based state and saved launch args, so "continue" after a reboot or session stop resumes the same
+  orchestration run (finished agents replay from the journal) instead of starting over
 - Issues in a fixed format: where, steps, expected, actual, likely cause, console errors, evidence
 
 ## Layout
@@ -47,6 +48,7 @@ npx skills update cup-with-qa -g
 skills/cup-with-qa/
   SKILL.md
   scripts/     init-run.sh run-tester.sh watch-round.sh capacity.sh quota-guard.sh memlog.sh status.py
+               restart-watchers.sh launch.py
   templates/   tester-brief-web.md tester-brief-mobile.md scenario-format.md issue-template.md workflow.template.js
   references/  resume.md
 ```

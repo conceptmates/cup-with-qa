@@ -43,8 +43,7 @@ Then write, from the preflight answers:
 For mobile, check the general `agent-device` CLI works (`npx -y agent-device --help`); some IDE wrappers named `agent-device` only work through their own tool. Start the watchers, detached so they survive the session:
 
 ```bash
-nohup bash "$RUN/scripts/quota-guard.sh" "$RUN" >/dev/null 2>&1 &
-nohup bash "$RUN/scripts/memlog.sh" "$RUN" >/dev/null 2>&1 &
+bash "$RUN/scripts/restart-watchers.sh" "$RUN"   # quota guard + memlog (+ dev server if DEV_CMD is set)
 ```
 
 Smoke-test before any fan-out: one tiny tester call that signs in and saves a screenshot. If it fails, fix it now; thirteen lanes failing the same way costs thirteen times as much.
@@ -62,14 +61,16 @@ Write `$RUN/lanes.json` (`[{"id": "...", "scope": "..."}]`). Scenario files are 
 
 ## Step 4 — Launch the orchestration workflow
 
-Run the workflow straight from the template — it is driven entirely by `args` (documented at its top), so there is nothing to edit:
+Run the workflow straight from the template — it is driven entirely by `args` (documented at its top), so there is nothing to edit.
+
+First write `$RUN/launch.json` with the script path and the exact args object, then launch with those same values:
 
 ```
 Workflow({ scriptPath: "$RUN/templates/workflow.template.js",
            args: { run_dir, lanes, max_rounds, pool: HARD_CAP, source_paths, research_notes, filed, tracker } })
 ```
 
-Record the run id in `HANDOFF.md`. The template already handles:
+Then `python3 "$RUN/scripts/launch.py" "$RUN" record <run id>` and note the run id in `HANDOFF.md`. Replay after a stop only works with the same script and args, so `launch.json` is what lets "continue" pick up this run instead of starting over. The template already handles:
 
 - **dynamic spawning** — every round starts through `scripts/capacity.sh`, which admits a lane only while free RAM, swap growth and CPU load leave headroom, up to the hard cap. Lanes wait at the gate and start as memory frees; running testers are never killed.
 - **the round loop** — a cheap waiter agent starts `scripts/run-tester.sh` and blocks on `scripts/watch-round.sh`; a judge agent reads the report, looks at every finding's screenshots, checks the claimed cause in the source, and writes `verdict.json` + `feedback-r<N>.md`. The lane stops when the judge is satisfied or after max rounds.
@@ -84,7 +85,11 @@ Swap climbing steadily or free memory under ~15% is the pattern that preceded bo
 
 ## Step 6 — Resume after any stop
 
-Read `references/resume.md`. In short: check `status.py`, restart the watchers if the machine rebooted, restart the dev server, then relaunch the workflow with `resumeFromRunId` and the same args. Completed agents replay from the journal for free, running testers are re-attached (never started twice), and judges return an existing `verdict.json` instead of re-judging.
+When the user says "continue", or after a reboot or Claude limit, read `references/resume.md`. In short:
+
+1. `bash "$RUN/scripts/restart-watchers.sh" "$RUN"` — restarts the quota guard, memlog and dev server if they are down, and reports a reboot.
+2. `python3 "$RUN/scripts/launch.py" "$RUN" show`, then resume the **same run**: `Workflow({ scriptPath, args, resumeFromRunId })` with exactly those values. Completed agents replay from the journal for free; only agents that were mid-work re-run, and they re-attach to a live tester or resume its session.
+3. If the tool refuses (a new Claude session) or the args changed, launch fresh with `start` = each lane's current round and `done_lanes`. Judges return an existing `verdict.json` and interrupted rounds resume their tester session, so this stays cheap.
 
 ## Step 7 — Report
 
@@ -104,6 +109,8 @@ List the issues filed (number, severity, title, URL), lanes that finished satisf
 - `scripts/watch-round.sh` — bounded wait on a round; writes `DONE` if the runner died
 - `scripts/capacity.sh` — admission gate on RAM, swap, CPU
 - `scripts/quota-guard.sh` — pause at threshold, lift after reset
+- `scripts/restart-watchers.sh` — start guard, memlog and dev server if down; detects a reboot
+- `scripts/launch.py` — record run ids next to the saved launch args; print what a resume needs
 - `scripts/memlog.sh`, `scripts/status.py`
 - `templates/` — tester briefs (web, mobile), scenario format, issue template, workflow template
 - `references/resume.md` — resume procedure and failure modes
